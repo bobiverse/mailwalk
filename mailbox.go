@@ -306,8 +306,8 @@ func (mailbox *Mailbox) ReadAllMessages(folderName string, startUID uint32) erro
 		// Subject
 		fmt.Printf("%-30s\t `%s`\n", aurora.Blue(strings.Join(froms, ";")), color.YellowString(msg.Envelope.Subject))
 
-		fmt.Println(strings.Repeat("-", 80))
-		time.Sleep(1 * time.Second) // Delay between processing each message
+		// fmt.Println(strings.Repeat("-", 80))
+		// time.Sleep(50 * time.Millisecond) // Delay between processing each message
 	}
 
 	if err = <-done; err != nil {
@@ -315,11 +315,13 @@ func (mailbox *Mailbox) ReadAllMessages(folderName string, startUID uint32) erro
 		return err
 	}
 
+	mailbox.ShowStats()
 	return nil // Return the last UID read
 }
 
 func (mailbox *Mailbox) ShowStats() {
 
+	fmt.Println()
 	fmt.Println(strings.Repeat("=", 80))
 	for sender, count := range mailbox.statsSenders {
 		fmt.Printf("%-5d - %s\n", count, sender)
@@ -328,6 +330,6 @@ func (mailbox *Mailbox) ShowStats() {
 	for sender, count := range mailbox.statsCounts {
 		fmt.Printf("%-5d - %s\n", count, sender)
 	}
-	fmt.Println(strings.Repeat("=", 80))
-
+	fmt.Println()
+	fmt.Println()
 }
