@@ -1,6 +1,7 @@
 package main
 
 import (
+	"context"
 	"crypto/tls"
 	"fmt"
 	"log"
@@ -30,6 +31,11 @@ type Mailbox struct {
 
 	// result fields
 	folders []string // imap folder names for further actions
+
+	context context.Context
+
+	statsCounts  map[string]uint
+	statsSenders map[string]uint
 }
 
 // EnvelopeSeqNum - every envelope/email have seq num ID to identify email
@@ -51,6 +57,12 @@ func NewMailbox(host string, port int, email, passw string) (*Mailbox, error) {
 
 		Email:    email,
 		Password: passw,
+
+		statsCounts: map[string]uint{
+			"emails-scanned": 0,
+			"attachments":    0,
+		},
+		statsSenders: map[string]uint{},
 	}
 
 	// Connect to server
@@ -219,10 +231,21 @@ func (mailbox *Mailbox) ReadAllMessages(folderName string, startUID uint32) erro
 
 	for msg := range messages {
 
+		select {
+		case <-mailbox.context.Done():
+			mailbox.ShowStats()
+			return nil
+		default:
+			// keep reading
+		}
+
+		mailbox.statsCounts["emails-scanned"]++
+
 		// Extract email addresses and collect them in a slice
 		var froms []string
 		for _, addr := range msg.Envelope.From {
 			froms = append(froms, addr.Address())
+			mailbox.statsSenders[addr.Address()]++
 		}
 
 		// Read/Unread
@@ -243,6 +266,7 @@ func (mailbox *Mailbox) ReadAllMessages(folderName string, startUID uint32) erro
 				if part.Disposition == "attachment" {
 					// log.Printf("%+v", part)
 					attachmentCount++
+					mailbox.statsCounts["attachments"]++
 				}
 			}
 		}
@@ -292,4 +316,18 @@ func (mailbox *Mailbox) ReadAllMessages(folderName string, startUID uint32) erro
 	}
 
 	return nil // Return the last UID read
+}
+
+func (mailbox *Mailbox) ShowStats() {
+
+	fmt.Println(strings.Repeat("=", 80))
+	for sender, count := range mailbox.statsSenders {
+		fmt.Printf("%-5d - %s\n", count, sender)
+	}
+	fmt.Println()
+	for sender, count := range mailbox.statsCounts {
+		fmt.Printf("%-5d - %s\n", count, sender)
+	}
+	fmt.Println(strings.Repeat("=", 80))
+
 }

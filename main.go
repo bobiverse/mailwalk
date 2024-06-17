@@ -1,9 +1,13 @@
 package main
 
 import (
+	"context"
 	"flag"
 	"fmt"
 	"log"
+	"os"
+	"os/signal"
+	"syscall"
 
 	"github.com/fatih/color"
 )
@@ -18,10 +22,25 @@ func main() {
 	fromUID := flag.Uint("from", 0, "email uid start read from")
 	flag.Parse()
 
+	// Mailbox
 	mbox, err := NewMailbox(*host, *port, *email, *password)
 	if err != nil {
 		log.Fatal(err)
 	}
+
+	// Create a context that is canceled when the user presses CTRL+C
+	ctx, cancel := context.WithCancel(context.Background())
+
+	// Create a channel to listen for OS signals
+	sigChan := make(chan os.Signal, 1)
+	signal.Notify(sigChan, os.Interrupt, syscall.SIGTERM)
+
+	go func() {
+		<-sigChan
+		fmt.Println("\nReceived an interrupt, stopping...")
+		cancel()
+	}()
+	mbox.context = ctx
 
 	for _, mfolder := range mbox.Folders() {
 		fmt.Printf("FOLDER: %-30s\t %s \n", mfolder, color.GreenString(mbox.cleanFolderName(mfolder)))
