@@ -254,9 +254,10 @@ func (mailbox *Mailbox) ReadAllMessages(folderName string, startUID uint32) erro
 		attachmentStr := "   "
 		if attachmentCount > 0 {
 			attachmentStr = fmt.Sprintf("📎%d", aurora.BgMagenta(attachmentCount))
-
 		}
 		fmt.Printf("%s ", attachmentStr)
+
+		// Subject
 		fmt.Printf("%-30s\t `%s`\n", aurora.Blue(strings.Join(froms, ";")), color.YellowString(msg.Envelope.Subject))
 
 		fmt.Println(strings.Repeat("-", 80))
