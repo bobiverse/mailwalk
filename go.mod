@@ -1,6 +1,6 @@
-module mailbox
+module github.com/bobiverse/mailwalk
 
-go 1.22.2
+go 1.22.4
 
 require (
 	github.com/emersion/go-imap v1.2.1
