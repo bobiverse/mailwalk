@@ -11,6 +11,8 @@ import (
 	"github.com/emersion/go-imap/client"
 	"github.com/fatih/color"
 	"github.com/logrusorgru/aurora"
+
+	"github.com/jhillyerd/enmime"
 )
 
 // Mailbox ..
@@ -256,6 +258,26 @@ func (mailbox *Mailbox) ReadAllMessages(folderName string, startUID uint32) erro
 			attachmentStr = fmt.Sprintf("📎%d", aurora.BgMagenta(attachmentCount))
 		}
 		fmt.Printf("%s ", attachmentStr)
+
+		// Body
+		section := &imap.BodySectionName{}
+		r := msg.GetBody(section)
+		// if r == nil {
+		// 	return fmt.Errorf("message body is empty")
+		// }
+		// buf := new(bytes.Buffer)
+		// if _, err := io.Copy(buf, r); err != nil {
+		// 	return err
+		// }
+		// fmt.Printf("%s", buf.Bytes())
+
+		env, err := enmime.ReadEnvelope(r)
+		if err != nil {
+			return fmt.Errorf("failed to parse MIME: %v", err)
+		}
+		env.Text = strings.TrimSpace(env.Text)
+		lineCount := len(strings.Split(env.Text, "\n"))
+		fmt.Printf("[%d lines] ", lineCount)
 
 		// Subject
 		fmt.Printf("%-30s\t `%s`\n", aurora.Blue(strings.Join(froms, ";")), color.YellowString(msg.Envelope.Subject))
