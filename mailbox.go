@@ -300,6 +300,8 @@ func (mailbox *Mailbox) ReadAllMessages(folderName string, startUID uint32) erro
 			return fmt.Errorf("failed to parse MIME: %v", err)
 		}
 		env.Text = strings.TrimSpace(env.Text)
+		// fname := fmt.Sprintf("%s-%d.txt", strings.Join(froms, "_"), msg.Uid)
+		// os.WriteFile(fname, []byte(env.Text), 0666)
 		lineCount := len(strings.Split(env.Text, "\n"))
 		fmt.Printf("[%d lines] ", lineCount)
 
@@ -307,7 +309,7 @@ func (mailbox *Mailbox) ReadAllMessages(folderName string, startUID uint32) erro
 		fmt.Printf("%-30s\t `%s`\n", aurora.Blue(strings.Join(froms, ";")), color.YellowString(msg.Envelope.Subject))
 
 		// fmt.Println(strings.Repeat("-", 80))
-		// time.Sleep(50 * time.Millisecond) // Delay between processing each message
+		// time.Sleep(500 * time.Millisecond) // Delay between processing each message
 	}
 
 	if err = <-done; err != nil {
