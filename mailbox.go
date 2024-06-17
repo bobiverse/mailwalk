@@ -203,7 +203,15 @@ func (mailbox *Mailbox) ReadAllMessages(folderName string, startUID uint32) erro
 	// Inside the ReadAllMessages function, adjust your fetch call:
 	go func() {
 		section := &imap.BodySectionName{Peek: true} // Use Peek to avoid marking as read
-		items := []imap.FetchItem{section.FetchItem(), imap.FetchEnvelope, imap.FetchUid}
+		items := []imap.FetchItem{
+			section.FetchItem(),
+			imap.FetchEnvelope,
+			imap.FetchUid,
+			imap.FetchInternalDate,
+			imap.FetchRFC822Size,
+			imap.FetchBodyStructure,
+		}
+
 		done <- mailbox.UidFetch(seqSet, items, messages)
 	}()
 
@@ -215,6 +223,7 @@ func (mailbox *Mailbox) ReadAllMessages(folderName string, startUID uint32) erro
 			froms = append(froms, addr.Address())
 		}
 
+		// Read/Unread
 		isUnread := true
 		if msg.Flags != nil {
 			for _, flag := range msg.Flags {
@@ -225,11 +234,29 @@ func (mailbox *Mailbox) ReadAllMessages(folderName string, startUID uint32) erro
 			}
 		}
 
+		// Attachments
+		attachmentCount := 0
+		if msg.BodyStructure != nil {
+			for _, part := range msg.BodyStructure.Parts {
+				if part.Disposition == "attachment" {
+					// log.Printf("%+v", part)
+					attachmentCount++
+				}
+			}
+		}
+
 		fmt.Printf("[%d][%s] ", aurora.Cyan(msg.Uid), msg.Envelope.Date.Format(time.DateTime))
 
 		if isUnread {
-			fmt.Printf("*")
+			fmt.Printf("%s ", aurora.BgBlue("NEW"))
 		}
+
+		attachmentStr := "   "
+		if attachmentCount > 0 {
+			attachmentStr = fmt.Sprintf("📎%d", aurora.BgMagenta(attachmentCount))
+
+		}
+		fmt.Printf("%s ", attachmentStr)
 		fmt.Printf("%-30s\t `%s`\n", aurora.Blue(strings.Join(froms, ";")), color.YellowString(msg.Envelope.Subject))
 
 		fmt.Println(strings.Repeat("-", 80))
