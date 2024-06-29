@@ -10,6 +10,7 @@ import (
 	"syscall"
 	"time"
 
+	"github.com/araddon/dateparse"
 	"github.com/fatih/color"
 	"github.com/logrusorgru/aurora"
 )
@@ -25,6 +26,10 @@ func main() {
 	fromUID := flag.Uint("from", 0, "email uid start read from")
 	command := flag.String("cmd", "", "bash command or script to execute")
 	timeout := flag.Uint("timeout", 30, "timeout (seconds) for connection to host")
+
+	dateFrom := flag.String("datefrom", "", "Date from")
+	dateTo := flag.String("dateto", "", "Date to")
+
 	flag.Parse()
 
 	isTLSStr := aurora.Red("-- NO --")
@@ -44,6 +49,9 @@ func main() {
 
 	dTimeout := time.Duration(*timeout) * time.Second
 
+	dFrom, _ := dateparse.ParseAny(*dateFrom)
+	dTo, _ := dateparse.ParseAny(*dateTo)
+
 	fmt.Printf("%20s: %s\n", "Host", aurora.Magenta(*host))
 	fmt.Printf("%20s: %d\n", "Port", aurora.Magenta(*port))
 	fmt.Printf("%20s: %d\n", "TLS", aurora.Magenta(isTLSStr))
@@ -51,6 +59,15 @@ func main() {
 	fmt.Printf("%20s: %s\n", "Password", isPwdStr)
 	fmt.Printf("%20s: %s\n", "Timeout", aurora.Magenta(dTimeout))
 	fmt.Printf("%20s: %s\n", "Folder", aurora.Cyan(*folder))
+
+	if !dFrom.IsZero() {
+		fmt.Printf("%20s: %s\n", "Date From", aurora.Magenta(dFrom.Format(time.DateOnly)))
+	}
+
+	if !dTo.IsZero() {
+		fmt.Printf("%20s: %s\n", "Date To", aurora.Magenta(dTo.Format(time.DateOnly)))
+	}
+
 	fmt.Printf("%20s: %s\n", "Command", aurora.Yellow(cmdStr))
 
 	//Ping host first
@@ -88,7 +105,7 @@ func main() {
 		log.Fatalf("ERR: %s", color.RedString("Choose folder to read: -folder=*"))
 	}
 
-	if err := mbox.ReadAllMessages(*folder, uint32(*fromUID), *command); err != nil {
+	if err := mbox.ReadAllMessages(*folder, uint32(*fromUID), dFrom, dTo, *command); err != nil {
 		color.Red("READ MSG: %s", err)
 	}
 

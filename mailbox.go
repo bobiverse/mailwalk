@@ -196,7 +196,7 @@ func (mailbox *Mailbox) Unreads(onlyFolders, ignoreFolders []string) EnvelopeSeq
 }
 
 // ReadAllMessages reads all messages from a specified folder, starting from a given UID
-func (mailbox *Mailbox) ReadAllMessages(folderName string, startUID uint32, command string) error {
+func (mailbox *Mailbox) ReadAllMessages(folderName string, startUID uint32, dFrom, dTo time.Time, command string) error {
 	_, err := mailbox.Select(folderName, false)
 	if err != nil {
 		log.Printf("Failed to select folder %s: %v", folderName, err)
@@ -206,9 +206,15 @@ func (mailbox *Mailbox) ReadAllMessages(folderName string, startUID uint32, comm
 	criteria := imap.NewSearchCriteria()
 	criteria.WithoutFlags = []string{"\\Deleted"}
 
-	// Add date criterion for today
-	today := time.Now().Format("02-Jan-2006")
-	criteria.Since, _ = time.Parse("02-Jan-2006", today)
+	// Add date criteria From
+	if !dFrom.IsZero() {
+		criteria.Since = dFrom
+	}
+
+	// Add date criteria To
+	if !dTo.IsZero() {
+		criteria.Before = dTo
+	}
 
 	if startUID > 0 {
 		criteria.Uid = new(imap.SeqSet)
@@ -323,10 +329,12 @@ func (mailbox *Mailbox) ReadAllMessages(folderName string, startUID uint32, comm
 		// Subject
 		fmt.Printf("%-30s\t `%s`\n", aurora.Blue(strings.Join(froms, ";")), color.YellowString(msg.Envelope.Subject))
 
-		a, b, err := runBashWithTimeout(time.Second*60, command, "")
-		log.Printf("A: %s", aurora.Yellow(a))
-		log.Printf("B: %s", aurora.Green(b))
-		log.Printf("C: %s", aurora.Red(err))
+		if command != "" {
+			a, b, err := runBashWithTimeout(time.Second*60, command, "")
+			log.Printf("A: %s", aurora.Yellow(a))
+			log.Printf("B: %s", aurora.Green(b))
+			log.Printf("C: %s", aurora.Red(err))
+		}
 
 		// fmt.Println(strings.Repeat("-", 80))
 		// time.Sleep(500 * time.Millisecond) // Delay between processing each message
