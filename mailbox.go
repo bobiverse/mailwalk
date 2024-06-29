@@ -50,7 +50,7 @@ func (mailbox *Mailbox) String() string {
 }
 
 // NewMailbox ..
-func NewMailbox(host string, port int, email, passw string) (*Mailbox, error) {
+func NewMailbox(host string, port int, isTLS bool, email, passw string, dTimeout time.Duration) (*Mailbox, error) {
 	mailbox := &Mailbox{
 		server: host,
 		port:   port,
@@ -66,22 +66,37 @@ func NewMailbox(host string, port int, email, passw string) (*Mailbox, error) {
 	}
 
 	// Connect to server
-	c, err := client.Dial(mailbox.String())
+	log.Printf("[%s] Connecting.. ", mailbox.String())
+
+	var c *client.Client
+	var err error
+	if isTLS {
+		// Start a TLS session
+		tlsConfig := &tls.Config{
+			ServerName: mailbox.server,
+			MinVersion: tls.VersionTLS11,
+		}
+
+		c, err = client.DialTLS(mailbox.String(), tlsConfig)
+	} else {
+		c, err = client.Dial(mailbox.String())
+	}
+
 	if err != nil {
 		return nil, err
 	}
-	log.Printf("[%s] Connected", mailbox.server)
+	log.Printf("[%s] Connected", mailbox.String())
 	mailbox.Client = c
 
 	// Start a TLS session
-	tlsConfig := &tls.Config{
-		ServerName: mailbox.server,
-		MinVersion: tls.VersionTLS11,
-	}
-	if err := c.StartTLS(tlsConfig); err != nil {
-		return nil, err
-	}
-	log.Printf("[%s] TLS started", mailbox.server)
+	// tlsConfig = &tls.Config{
+	// 	ServerName: mailbox.server,
+	// 	MinVersion: tls.VersionTLS11,
+	// }
+	// if err := c.StartTLS(tlsConfig); err != nil {
+	// 	return nil, err
+	// }
+	// log.Printf("[%s] TLS started", mailbox.server)
 
 	// Login
 	if err := mailbox.Login(mailbox.Email, mailbox.Password); err != nil {
@@ -181,7 +196,7 @@ func (mailbox *Mailbox) Unreads(onlyFolders, ignoreFolders []string) EnvelopeSeq
 }
 
 // ReadAllMessages reads all messages from a specified folder, starting from a given UID
-func (mailbox *Mailbox) ReadAllMessages(folderName string, startUID uint32) error {
+func (mailbox *Mailbox) ReadAllMessages(folderName string, startUID uint32, command string) error {
 	_, err := mailbox.Select(folderName, false)
 	if err != nil {
 		log.Printf("Failed to select folder %s: %v", folderName, err)
@@ -307,6 +322,11 @@ func (mailbox *Mailbox) ReadAllMessages(folderName string, startUID uint32) erro
 
 		// Subject
 		fmt.Printf("%-30s\t `%s`\n", aurora.Blue(strings.Join(froms, ";")), color.YellowString(msg.Envelope.Subject))
+
+		a, b, err := runBashWithTimeout(time.Second*60, command, "")
+		log.Printf("A: %s", aurora.Yellow(a))
+		log.Printf("B: %s", aurora.Green(b))
+		log.Printf("C: %s", aurora.Red(err))
 
 		// fmt.Println(strings.Repeat("-", 80))
 		// time.Sleep(500 * time.Millisecond) // Delay between processing each message

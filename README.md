@@ -1,3 +1,3 @@
 ```bash
-./mailbox -host $HOST -port $PORT -email $EMAIL -pwd $PASS
+./mailwalk -host $HOST -port $PORT -email $EMAIL -pwd $PASS
 ```
