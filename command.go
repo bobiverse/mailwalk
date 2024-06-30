@@ -2,6 +2,7 @@ package main
 
 import (
 	"bytes"
+	"fmt"
 	"log"
 	"os"
 	"os/exec"
@@ -12,7 +13,7 @@ import (
 
 // Execute bash command with valid timeout
 // kill process if too long execution
-func runBashWithTimeout(timeout time.Duration, cmdstr, cmdInterpreter string) ([]byte, []byte, error) {
+func runBashWithTimeout(timeout time.Duration, cmdstr, cmdInterpreter string) ([]byte, error, error) {
 	// arr := strings.Fields(cmdstr)
 	// name := arr[0]
 	// args := arr[1:]
@@ -65,5 +66,10 @@ func runBashWithTimeout(timeout time.Duration, cmdstr, cmdInterpreter string) ([
 	}()
 
 	err := cmd.Wait()
-	return bufOut.Bytes(), bufErr.Bytes(), err
+
+	var errBuf error
+	if _errBuf := bufErr.Bytes(); len(_errBuf) > 0 {
+		errBuf = fmt.Errorf("%s", bufErr.Bytes())
+	}
+	return bufOut.Bytes(), errBuf, err
 }

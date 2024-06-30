@@ -1,8 +1,11 @@
 package main
 
 import (
+	"bufio"
 	"fmt"
 	"net"
+	"os"
+	"strings"
 	"time"
 )
 
@@ -15,4 +18,17 @@ func pingHost(host string, port int, timeout time.Duration) error {
 	}
 	conn.Close()
 	return nil
+}
+
+func promptConfirm(question, Y, N string) bool {
+	reader := bufio.NewReader(os.Stdin)
+	fmt.Printf("%s (%s/%s): ", question, Y, N)
+	input, err := reader.ReadString('\n')
+	if err != nil {
+		fmt.Println("Error reading input:", err)
+		return false
+	}
+
+	input = strings.TrimSpace(input)
+	return strings.EqualFold(input, Y)
 }

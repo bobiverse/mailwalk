@@ -12,6 +12,7 @@ import (
 	"github.com/emersion/go-imap/client"
 	"github.com/fatih/color"
 	"github.com/logrusorgru/aurora"
+	"golang.org/x/net/proxy"
 
 	"github.com/jhillyerd/enmime"
 )
@@ -65,6 +66,17 @@ func NewMailbox(host string, port int, isTLS bool, email, passw string, dTimeout
 		statsSenders: map[string]uint{},
 	}
 
+	// SOCKS5 proxy address
+	proxyAddress := "127.0.0.1:9050"
+
+	// Create a SOCKS5 dialer
+	log.Printf("[%s] Proxy setup.. ", proxyAddress)
+	dialer, errd := proxy.SOCKS5("tcp", proxyAddress, nil, proxy.Direct)
+	if errd != nil {
+		log.Fatalf("Failed to create SOCKS5 dialer: %v", errd)
+	}
+	log.Printf("[%s] Proxy OK", proxyAddress)
+
 	// Connect to server
 	log.Printf("[%s] Connecting.. ", mailbox.String())
 
@@ -77,9 +89,9 @@ func NewMailbox(host string, port int, isTLS bool, email, passw string, dTimeout
 			MinVersion: tls.VersionTLS11,
 		}
 
-		c, err = client.DialTLS(mailbox.String(), tlsConfig)
+		c, err = client.DialWithDialerTLS(dialer, mailbox.String(), tlsConfig)
 	} else {
-		c, err = client.Dial(mailbox.String())
+		c, err = client.DialWithDialer(dialer, mailbox.String())
 	}
 
 	if err != nil {
@@ -87,16 +99,6 @@ func NewMailbox(host string, port int, isTLS bool, email, passw string, dTimeout
 	}
 	log.Printf("[%s] Connected", mailbox.String())
 	mailbox.Client = c
-
-	// Start a TLS session
-	// tlsConfig = &tls.Config{
-	// 	ServerName: mailbox.server,
-	// 	MinVersion: tls.VersionTLS11,
-	// }
-	// if err := c.StartTLS(tlsConfig); err != nil {
-	// 	return nil, err
-	// }
-	// log.Printf("[%s] TLS started", mailbox.server)
 
 	// Login
 	if err := mailbox.Login(mailbox.Email, mailbox.Password); err != nil {
@@ -269,6 +271,20 @@ func (mailbox *Mailbox) ReadAllMessages(folderName string, startUID uint32, dFro
 			mailbox.statsSenders[addr.Address()]++
 		}
 
+		// Extract email addresses and collect them in a slice
+		var ccs []string
+		for _, addr := range msg.Envelope.Cc {
+			froms = append(froms, addr.Address())
+			mailbox.statsSenders[addr.Address()]++
+		}
+
+		// Extract email addresses and collect them in a slice
+		var bccs []string
+		for _, addr := range msg.Envelope.Bcc {
+			froms = append(froms, addr.Address())
+			mailbox.statsSenders[addr.Address()]++
+		}
+
 		// Read/Unread
 		isUnread := true
 		if msg.Flags != nil {
@@ -329,11 +345,28 @@ func (mailbox *Mailbox) ReadAllMessages(folderName string, startUID uint32, dFro
 		// Subject
 		fmt.Printf("%-30s\t `%s`\n", aurora.Blue(strings.Join(froms, ";")), color.YellowString(msg.Envelope.Subject))
 
+		// Custom command
 		if command != "" {
-			a, b, err := runBashWithTimeout(time.Second*60, command, "")
-			log.Printf("A: %s", aurora.Yellow(a))
-			log.Printf("B: %s", aurora.Green(b))
-			log.Printf("C: %s", aurora.Red(err))
+			cmdstr := command
+			cmdstr = strings.ReplaceAll(cmdstr, "{{Uid}}", fmt.Sprintf("%d", msg.Uid))
+			cmdstr = strings.ReplaceAll(cmdstr, "{{MessageId}}", msg.Envelope.MessageId)
+			cmdstr = strings.ReplaceAll(cmdstr, "{{Subject}}", msg.Envelope.Subject)
+			cmdstr = strings.ReplaceAll(cmdstr, "{{From}}", strings.Join(froms, "; "))
+			cmdstr = strings.ReplaceAll(cmdstr, "{{Cc}}", strings.Join(ccs, "; "))
+			cmdstr = strings.ReplaceAll(cmdstr, "{{Bcc}}", strings.Join(bccs, "; "))
+			cmdstr = strings.ReplaceAll(cmdstr, "{{ReplyTo}}", msg.Envelope.InReplyTo)
+			cmdstr = strings.ReplaceAll(cmdstr, "{{DateTime}}", msg.Envelope.Date.Format(time.DateTime))
+			cmdstr = strings.ReplaceAll(cmdstr, "{{Text}}", env.Text)
+			cmdstr = strings.ReplaceAll(cmdstr, "{{HTML}}", env.HTML)
+			buf, errStd, err := runBashWithTimeout(time.Second*60, cmdstr, "")
+			if errStd != nil {
+				color.Red("STDERR: %s", errStd)
+			}
+			if err != nil {
+				color.Red("ERROR: %s", err)
+			}
+
+			fmt.Printf("%s", aurora.Yellow(buf))
 		}
 
 		// fmt.Println(strings.Repeat("-", 80))

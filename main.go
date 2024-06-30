@@ -26,6 +26,16 @@ func main() {
 	fromUID := flag.Uint("from", 0, "email uid start read from")
 	command := flag.String("cmd", "", "bash command or script to execute")
 	timeout := flag.Uint("timeout", 30, "timeout (seconds) for connection to host")
+	proxy := flag.String("proxy", "127.0.0.1:9050", "socks5 proxy")
+	// Start a TLS session
+	// tlsConfig = &tls.Config{
+	// 	ServerName: mailbox.server,
+	// 	MinVersion: tls.VersionTLS11,
+	// }
+	// if err := c.StartTLS(tlsConfig); err != nil {
+	// 	return nil, err
+	// }
+	// log.Printf("[%s] TLS started", mailbox.server)
 
 	dateFrom := flag.String("datefrom", "", "Date from")
 	dateTo := flag.String("dateto", "", "Date to")
@@ -54,11 +64,11 @@ func main() {
 
 	fmt.Printf("%20s: %s\n", "Host", aurora.Magenta(*host))
 	fmt.Printf("%20s: %d\n", "Port", aurora.Magenta(*port))
-	fmt.Printf("%20s: %d\n", "TLS", aurora.Magenta(isTLSStr))
+	fmt.Printf("%20s: %v\n", "TLS", aurora.Magenta(isTLSStr))
 	fmt.Printf("%20s: %s\n", "Email", aurora.Magenta(*email))
 	fmt.Printf("%20s: %s\n", "Password", isPwdStr)
 	fmt.Printf("%20s: %s\n", "Timeout", aurora.Magenta(dTimeout))
-	fmt.Printf("%20s: %s\n", "Folder", aurora.Cyan(*folder))
+	fmt.Printf("%20s: %s\n", "Folder", aurora.Green(*folder))
 
 	if !dFrom.IsZero() {
 		fmt.Printf("%20s: %s\n", "Date From", aurora.Magenta(dFrom.Format(time.DateOnly)))
@@ -70,11 +80,20 @@ func main() {
 
 	fmt.Printf("%20s: %s\n", "Command", aurora.Yellow(cmdStr))
 
-	//Ping host first
-	if err := pingHost(*host, *port, dTimeout); err != nil {
-		log.Fatal(err)
+	if *proxy == "" {
+		if !promptConfirm("\n\n>>> No proxy! Continue without proxy?", "Y", "n") {
+			log.Fatalf("no proxy. Abort.")
+		}
+		fmt.Printf("%20s: %s\n", "Proxy", aurora.Red("-- NO --"))
+	} else {
+		fmt.Printf("%20s: %s\n", "Proxy", aurora.Green(*proxy))
 	}
-	log.Printf(">> Ping host: %s", aurora.Green("OK"))
+
+	// //Ping host first
+	// if err := pingHost(*host, *port, dTimeout); err != nil {
+	// 	log.Fatal(err)
+	// }
+	// log.Printf(">> Ping host: %s", aurora.Green("OK"))
 
 	// Mailbox
 	mbox, err := NewMailbox(*host, *port, *isTls, *email, *password, dTimeout)
