@@ -26,7 +26,7 @@ func main() {
 	fromUID := flag.Uint("from", 0, "email uid start read from")
 	command := flag.String("cmd", "", "bash command or script to execute")
 	timeout := flag.Uint("timeout", 30, "timeout (seconds) for connection to host")
-	proxy := flag.String("proxy", "127.0.0.1:9050", "socks5 proxy")
+	proxy := flag.String("proxy", "", "socks5 proxy")
 	// Start a TLS session
 	// tlsConfig = &tls.Config{
 	// 	ServerName: mailbox.server,
@@ -81,12 +81,9 @@ func main() {
 	fmt.Printf("%20s: %s\n", "Command", aurora.Yellow(cmdStr))
 
 	if *proxy == "" {
-		if !promptConfirm("\n\n>>> No proxy! Continue without proxy?", "Y", "n") {
-			log.Fatalf("no proxy. Abort.")
-		}
 		fmt.Printf("%20s: %s\n", "Proxy", aurora.Red("-- NO --"))
 	} else {
-		fmt.Printf("%20s: %s\n", "Proxy", aurora.Green(*proxy))
+		fmt.Printf("%20s: %s\n", "Proxy", aurora.Cyan(*proxy))
 	}
 
 	// //Ping host first
@@ -96,7 +93,7 @@ func main() {
 	// log.Printf(">> Ping host: %s", aurora.Green("OK"))
 
 	// Mailbox
-	mbox, err := NewMailbox(*host, *port, *isTls, *email, *password, dTimeout)
+	mbox, err := NewMailbox(*host, *port, *isTls, *email, *password, dTimeout, *proxy)
 	if err != nil {
 		log.Fatal(err)
 	}

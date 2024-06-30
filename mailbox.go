@@ -5,6 +5,7 @@ import (
 	"crypto/tls"
 	"fmt"
 	"log"
+	"net"
 	"strings"
 	"time"
 
@@ -25,6 +26,8 @@ type Mailbox struct {
 	// almost never changes
 	server string
 	port   int
+
+	proxy string
 
 	// mandatory login fields
 	Email    string
@@ -51,10 +54,12 @@ func (mailbox *Mailbox) String() string {
 }
 
 // NewMailbox ..
-func NewMailbox(host string, port int, isTLS bool, email, passw string, dTimeout time.Duration) (*Mailbox, error) {
+func NewMailbox(host string, port int, isTLS bool, email, passw string, dTimeout time.Duration, proxyAddr string) (*Mailbox, error) {
 	mailbox := &Mailbox{
 		server: host,
 		port:   port,
+
+		proxy: proxyAddr,
 
 		Email:    email,
 		Password: passw,
@@ -66,16 +71,20 @@ func NewMailbox(host string, port int, isTLS bool, email, passw string, dTimeout
 		statsSenders: map[string]uint{},
 	}
 
-	// SOCKS5 proxy address
-	proxyAddress := "127.0.0.1:9050"
+	var dialer client.Dialer
 
-	// Create a SOCKS5 dialer
-	log.Printf("[%s] Proxy setup.. ", proxyAddress)
-	dialer, errd := proxy.SOCKS5("tcp", proxyAddress, nil, proxy.Direct)
-	if errd != nil {
-		log.Fatalf("Failed to create SOCKS5 dialer: %v", errd)
+	dialer = &net.Dialer{}
+
+	if mailbox.proxy != "" {
+		// Create a SOCKS5 dialer
+		log.Printf("[%s] Proxy setup.. ", aurora.Cyan(mailbox.proxy))
+		var err error
+		dialer, err = proxy.SOCKS5("tcp", mailbox.proxy, nil, proxy.Direct)
+		if err != nil {
+			log.Fatalf("Failed to create SOCKS5 dialer: %v", err)
+		}
+		log.Printf("[%s] Proxy OK", aurora.Cyan(mailbox.proxy))
 	}
-	log.Printf("[%s] Proxy OK", proxyAddress)
 
 	// Connect to server
 	log.Printf("[%s] Connecting.. ", mailbox.String())
