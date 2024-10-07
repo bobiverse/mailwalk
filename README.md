@@ -25,6 +25,15 @@ Here’s a basic example to extract email details and output the information to 
     -folder INBOX \
     -datefrom 2024-06-20 \
     -cmd 'echo "{{MessageId}}; {{DateTime}}; {{Subject}}; {{From}}" | tee -a maildump.txt'  
+
+# [102][2024-09-12 08:45:12]     [6 lines] peter@spiderman.example.com       `Weekly Report Summary`
+# [119][2024-09-13 10:22:34]     [12 lines] diana@wonderwoman.example.com     `=?utf-8?Q?Server_Maintenance_Notice?=`
+# [120][2024-09-13 14:45:09] 📎1 [5 lines] clark@superman.example.com         `Urgent: Website Downtime Alert`
+# [121][2024-09-14 09:32:45]     [10 lines] bruce@batman.example.com          `=?utf-8?Q?Invitation_to_Tech_Summit_2024?=`
+# [122][2024-09-14 11:15:29]     [18 lines] tony@ironman.example.com          `Security Vulnerability Notification`
+# [123][2024-09-14 12:37:03] 📎2 [7 lines] natasha@blackwidow.example.com     `Monthly Financial Report`
+# [124][2024-09-15 08:59:11]     [25 lines] steve@captainamerica.example.com  `=?utf-8?Q?Upcoming_Healthcare_Seminar_2024?=`
+
 ```  
 
 - `-host`: Mail server host (e.g., *imap.gmail.com*)  
