@@ -1,6 +1,6 @@
-# 📨 **MailWalk**
+# 📨 **mailwalk**
 
-**MailWalk** is a simple tool to read and loop through your mailbox, automating tasks by running custom commands on each email. 
+Simple tool to read and loop through your mailbox, automating tasks by running custom commands on each email. 
 For automating email parsing, notification systems, and more.
 
 
