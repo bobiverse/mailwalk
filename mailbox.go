@@ -396,11 +396,11 @@ func (mailbox *Mailbox) ShowStats() {
 	fmt.Println()
 	fmt.Println(strings.Repeat("=", 80))
 	for sender, count := range mailbox.statsSenders {
-		fmt.Printf("%-5d - %s\n", count, sender)
+		fmt.Printf("[stats] %-5d %s\n", count, sender)
 	}
 	fmt.Println()
 	for sender, count := range mailbox.statsCounts {
-		fmt.Printf("%-5d - %s\n", count, sender)
+		fmt.Printf("[stats] %-5d %s\n", count, sender)
 	}
 	fmt.Println()
 	fmt.Println()
