@@ -26,6 +26,7 @@ Here’s a basic example to extract email details and output the information to 
     -datefrom 2024-06-20 \
     -cmd 'echo "{{MessageId}}; {{DateTime}}; {{Subject}}; {{From}}" | tee -a maildump.txt'  
 
+# Output:
 # [102][2024-09-12 08:45:12]     [6 lines] peter@spiderman.example.com       `Weekly Report Summary`
 # [119][2024-09-13 10:22:34]     [12 lines] diana@wonderwoman.example.com     `=?utf-8?Q?Server_Maintenance_Notice?=`
 # [120][2024-09-13 14:45:09] 📎1 [5 lines] clark@superman.example.com         `Urgent: Website Downtime Alert`
@@ -35,6 +36,20 @@ Here’s a basic example to extract email details and output the information to 
 # [124][2024-09-15 08:59:11]     [25 lines] steve@captainamerica.example.com  `=?utf-8?Q?Upcoming_Healthcare_Seminar_2024?=`
 
 ```  
+
+And dummy example from `-cmd` command previously used.
+```bash
+cat maildump.txt
+
+# Output:
+# <0a12bc34d56e789f@example.com>; 2024-09-12 08:45:12; Weekly Report Summary; peter@spiderman.example.com
+# <1b23cd45e67f890a@example.com>; 2024-09-13 10:22:34; =?utf-8?Q?Server_Maintenance_Notice?=; diana@wonderwoman.example.com
+# <2c34de56f78g901b@example.com>; 2024-09-13 14:45:09; Urgent: Website Downtime Alert; clark@superman.example.com
+# <3d45ef67g89h012c@example.com>; 2024-09-14 09:32:45; =?utf-8?Q?Invitation_to_Tech_Summit_2024?=; bruce@batman.example.com
+# <4e56fg78h90i123d@example.com>; 2024-09-14 11:15:29; Security Vulnerability Notification; tony@ironman.example.com
+# <5f67gh89i01j234e@example.com>; 2024-09-14 12:37:03; Monthly Financial Report; natasha@blackwidow.example.com
+# <6g78hi90j12k345f@example.com>; 2024-09-15 08:59:11; =?utf-8?Q?Upcoming_Healthcare_Seminar_2024?=; steve@captainamerica.example.com
+```
 
 - `-host`: Mail server host (e.g., *imap.gmail.com*)  
 - `-port`: Mail server port (e.g., *993*)  
