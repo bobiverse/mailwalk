@@ -8,7 +8,7 @@ require (
 	github.com/fatih/color v1.17.0
 	github.com/jhillyerd/enmime v1.3.0
 	github.com/logrusorgru/aurora v2.0.3+incompatible
-	golang.org/x/net v0.30.0
+	golang.org/x/net v0.38.0
 )
 
 require (
@@ -23,6 +23,6 @@ require (
 	github.com/pkg/errors v0.9.1 // indirect
 	github.com/rivo/uniseg v0.4.7 // indirect
 	github.com/ssor/bom v0.0.0-20170718123548-6386211fdfcf // indirect
-	golang.org/x/sys v0.26.0 // indirect
-	golang.org/x/text v0.19.0 // indirect
+	golang.org/x/sys v0.31.0 // indirect
+	golang.org/x/text v0.23.0 // indirect
 )
