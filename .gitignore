@@ -2,3 +2,4 @@ mailwalk
 *.local
 *.local.*
 .env
+.vscode/
